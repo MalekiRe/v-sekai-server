@@ -54,11 +54,11 @@ pub struct DataPacket {
     pub id: Uuid,
     pub data: Vec<u8>
 }
-trait SendPacket {
-    fn send_packet<T>(self, peer: Peer<T>, channel: u32) -> Result<()>;
+pub trait SendPacket {
+    fn send_packet<T>(self, peer: &mut Peer<T>, channel: u8) -> Result<()>;
 }
 impl SendPacket for SpawnPacket {
-    fn send_packet<T>(self, mut peer: Peer<T>, channel: u8) -> Result<()> {
+    fn send_packet<T>(self, mut peer: &mut Peer<T>, channel: u8) -> Result<()> {
         let packet = PacketType::Spawn(self);
         let bytes = to_vec(&packet)?;//TODO optimize this so it doesn't do a heap allocation.
         peer.send_packet(Packet::new(bytes.as_slice(), PacketMode::ReliableSequenced)?, channel)?;
@@ -66,7 +66,7 @@ impl SendPacket for SpawnPacket {
     }
 }
 impl SendPacket for DeletePacket {
-    fn send_packet<T>(self, mut peer: Peer<T>, channel: u8) -> Result<()> {
+    fn send_packet<T>(self, mut peer: &mut Peer<T>, channel: u8) -> Result<()> {
         let packet = PacketType::Delete(self);
         let bytes = to_vec(&packet)?;//TODO optimize this so it doesn't do a heap allocation.
         peer.send_packet(Packet::new(bytes.as_slice(), PacketMode::ReliableSequenced)?, channel)?;
@@ -74,7 +74,7 @@ impl SendPacket for DeletePacket {
     }
 }
 impl SendPacket for RequestOwnershipPacket {
-    fn send_packet<T>(self, mut peer: Peer<T>, channel: u8) -> Result<()> {
+    fn send_packet<T>(self, mut peer: &mut Peer<T>, channel: u8) -> Result<()> {
         let packet = PacketType::RequestOwnership(self);
         let bytes = to_vec(&packet)?;//TODO optimize this so it doesn't do a heap allocation.
         peer.send_packet(Packet::new(bytes.as_slice(), PacketMode::ReliableSequenced)?, channel)?;
@@ -82,7 +82,7 @@ impl SendPacket for RequestOwnershipPacket {
     }
 }
 impl SendPacket for DataPacket {
-    fn send_packet<T>(self, mut peer: Peer<T>, channel: u8) -> Result<()> {
+    fn send_packet<T>(self, mut peer: &mut Peer<T>, channel: u8) -> Result<()> {
         let packet = PacketType::SendData(self);
         let bytes = to_vec(&packet)?;//TODO optimize this so it doesn't do a heap allocation.
         peer.send_packet(Packet::new(bytes.as_slice(), PacketMode::ReliableSequenced)?, channel)?;

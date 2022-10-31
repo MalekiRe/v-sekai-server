@@ -6,7 +6,7 @@ use anyhow::Context;
 use enet::*;
 use rmp_serde::{from_slice, to_vec};
 use uuid::Uuid;
-use commonlib::{DataPacket, PacketType, SpawnPacket};
+use commonlib::{DataPacket, PacketType, SendPacket, SpawnPacket};
 
 
 pub fn main() -> anyhow::Result<()> {
@@ -50,36 +50,19 @@ pub fn main() -> anyhow::Result<()> {
         };
     };
 
-
-
-    // send a "hello"-like packet
-    // peer.send_packet(
-    //     Packet::new(b"harro", PacketMode::ReliableSequenced).unwrap(),
-    //     1,
-    // )
-    //     .context("sending packet failed")?;
     let id_of_obj = Uuid::new_v4();
-    let bytes = to_vec(&PacketType::Spawn(SpawnPacket{
+    let spawn_packet = SpawnPacket{
         id: id_of_obj,
         owner: /*Uuid::from_u128(69420)*/peer.data().unwrap().clone(),
         master: peer.data().unwrap().clone(),
-    })).unwrap();
+    };
+    spawn_packet.send_packet(&mut peer, 1)?;
 
-    peer.send_packet(
-        Packet::new(bytes.as_slice(), PacketMode::ReliableSequenced).unwrap(),
-        1,
-    ).context("sending packet failed")?;
-
-    let bytes = to_vec(&PacketType::SendData(DataPacket{
+    let data_packet = DataPacket{
         id: id_of_obj,
         data: vec![1, 2, 3, 69, 42, 0]
-    })).unwrap();
-    peer.send_packet(
-        Packet::new(bytes.as_slice(), PacketMode::ReliableSequenced).unwrap(),
-        1,
-    ).context("sending packet failed")?;
-    // disconnect after all outgoing packets have been sent.
-    //peer.disconnect_later(5);
+    };
+    data_packet.send_packet(&mut peer, 1)?;
 
     loop {
         let e = host.service(1000).context("service failed")?;
